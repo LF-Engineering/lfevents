@@ -214,6 +214,74 @@ class LFEvents_Admin {
 		);
 
 		register_post_type( 'lfe_community_event', $opts );
+
+		$opts = array(
+			'labels'             => array(
+				'name'          => __( 'Weekly Snaps' ),
+				'singular_name' => __( 'Weekly Snap' ),
+				'all_items'     => __( 'All Weekly Snaps' ),
+			),
+			'public'             => true,
+			'publicly_queryable' => true,
+			'query_var'          => false,
+			'show_ui'            => true,
+			'has_archive'        => true,
+			'show_in_nav_menus'  => true,
+			'show_in_rest'       => true,
+			'hierarchical'       => false,
+			'menu_icon'          => 'dashicons-calendar',
+			'rewrite'            => array( 'slug' => 'weekly-snaps' ),
+			'supports'           => array( 'title', 'editor', 'thumbnail', 'excerpt', 'revisions', 'custom-fields', 'author' ),
+			'menu_position'      => 20,
+			'template'          => array(
+				array( 'core/columns', array(), array(
+					array( 'core/column', array(
+						'width'       => 33.33,
+					), array(
+						array( 'core/image', array(
+							'size'       => 'large',
+							'linkDestination'       => '',
+						) ),
+					) ),
+					array( 'core/column', array(
+						'width'       => 66.66,
+					), array(
+						array( 'core/paragraph', array() ),
+					) ),
+				) ),
+				array( 'core/columns', array(), array(
+					array( 'core/column', array(
+						'width'       => 33.33,
+					), array(
+						array( 'core/image', array(
+							'size'       => 'large',
+							'linkDestination'       => '',
+						) ),
+					) ),
+					array( 'core/column', array(
+						'width'       => 66.66,
+					), array(
+						array( 'core/paragraph', array() ),
+					) ),
+				) ),
+				array( 'core/columns', array(), array(
+					array( 'core/column', array(
+						'width'       => 33.33,
+					), array(
+						array( 'core/image', array(
+							'size'       => 'large',
+							'linkDestination'       => '',
+						) ),
+					) ),
+					array( 'core/column', array(
+						'width'       => 66.66,
+					), array(
+						array( 'core/paragraph', array() ),
+					) ),
+				) ),
+			),
+		);
+		register_post_type( 'lfe_weekly_snap', $opts );
 	}
 
 	/**
