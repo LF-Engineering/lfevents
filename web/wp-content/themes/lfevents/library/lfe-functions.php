@@ -272,12 +272,13 @@ function lfe_get_sponsors( $parent_id ) {
 	$post_types = lfe_get_post_types();
 
 	$args = array(
-		'post_type'              => $post_types,
-		'post_parent'            => $parent_id,
-		'name'                   => 'sponsor-list',
-		'no_found_rows'          => true,  // used to improve performance.
-		'update_post_meta_cache' => false, // used to improve performance.
-		'update_post_term_cache' => false, // used to improve performance.
+		'post_type'               => $post_types,
+		'post_parent'             => $parent_id,
+		'name'                    => 'sponsor-list',
+		'no_found_rows'           => true,  // used to improve performance.
+		'update_post_meta_cache'  => false, // used to improve performance.
+		'update_post_term_cache'  => false, // used to improve performance.
+		'wpml_do_not_adjust_name' => true, // WPML workaround.
 	);
 
 	$the_query = new WP_Query( $args );
@@ -716,11 +717,18 @@ function show_non_event_menu() {
  * Gets the top parent ID for the given Event page.
  *
  * @param object $post The current Event page.
+ * @param bool   $english_parent Whether to return the English-language parent or the true parent of the post.
  */
-function lfe_get_event_parent_id( $post ) {
+function lfe_get_event_parent_id( $post, $english_parent = true ) {
 	if ( ! is_object( $post ) ) {
 		return;
 	}
+
+	if ( $english_parent ) {
+		// gets the English language post.
+		$post = get_post( apply_filters( 'wpml_object_id', $post->ID, get_post_type( $post ), true, 'en' ) );
+	}
+
 	if ( $post->post_parent ) {
 		$ancestors = get_post_ancestors( $post->ID );
 		$parent_id = $ancestors[ count( $ancestors ) - 1 ];
@@ -746,3 +754,57 @@ function lfe_get_newsletter_form_id( $parent_id ) {
 		return '3fd88e30-9f70-4257-a44d-72643403281d';
 	}
 }
+
+/**
+ * Generates a language selector for an Event if it has been translated.
+ *
+ * @param string $background_style sets the solid or gradient background color.
+ * @param string $menu_text_color color of the txt on the topnav.
+ */
+function lfe_get_language_selector( $background_style, $menu_text_color ) {
+	$is_translated = apply_filters( 'wpml_element_has_translations', null, get_the_id(), get_post_type() );
+	if ( ! $is_translated ) {
+		return;
+	}
+
+	$my_current_lang = apply_filters( 'wpml_current_language', null );
+	$my_current_lang = apply_filters( 'wpml_translated_language_name', null, $my_current_lang, false );
+
+	echo '<li class="page_item page_item_has_children language-selector">';
+	echo '<a href="#">';
+	echo '<svg viewBox="0 0 24 24" width=32 ><path fill="currentColor" d="m11.62965 16.61452c-1.13922-.692-3.111-2.36313-3.153-2.32718a28.32942 28.32942 0 0 1 -3.30095 2.26177c-.68823.39708-1.38892.49615-1.82064-.09139a.992.992 0 0 1 .26656-1.40406c.00852-.00391 2.44665-1.594 3.25973-2.29678a11.64387 11.64387 0 0 1 -2.23281-3.53521 1.07774 1.07774 0 0 1 .52716-1.36835c.52715-.22205 1.049-.12664 1.48663.61989a10.33341 10.33341 0 0 0 1.8143 2.89517 10.853 10.853 0 0 0 2.1563-4.3469l-7.63293-.02148v-2.00685h4.8124v-.99406a.98574.98574 0 1 1 1.9713 0v.99406h5.1703v2.00685h-2.08646a17.03869 17.03869 0 0 1 -2.64065 5.75689 15.88157 15.88157 0 0 0 2.30149 1.66068l2.3092-5.66617a1.162 1.162 0 0 1 2.1802.01591l3.01041 7.389 1.85638 4.385h-2.47393l-1.08252-2.53924h-4.84082l-.888 2.53924h-2.5993l.287-.69166zm4.31307-5.16715-1.67531 4.55419h3.35059z"></path></svg>';
+	echo '</a>';
+	echo '<ul class="children" style="' . esc_html( $background_style ) . '">';
+	do_action( 'wpml_add_language_selector' );
+	echo '</ul></li>';
+}
+
+// WPML constants.
+define( 'ICL_DONT_LOAD_NAVIGATION_CSS', true );
+define( 'ICL_DONT_LOAD_LANGUAGE_SELECTOR_CSS', true );
+define( 'ICL_DONT_LOAD_LANGUAGES_JS', true );
+
+// WPML workaround to deal with missing sponsors pages.
+// See: https://wpml.org/forums/topic/does-wpml-manipulate-the-post_parent-value-for-posts/.
+add_filter(
+	'wpml_pre_parse_query',
+	function ( $q ) {
+		if ( empty( $q->get( 'wpml_do_not_adjust_name' ) ) ) {
+			return $q;
+		}
+
+		$name = $q->get( 'name' );
+		unset( $q->query['name'] );
+		unset( $q->query_vars['name'] );
+
+		add_filter(
+			'wpml_post_parse_query',
+			function ( $q ) use ( $name ) {
+				$q->set( 'name', $name );
+				return $q;
+			}
+		);
+
+		return $q;
+	}
+);
